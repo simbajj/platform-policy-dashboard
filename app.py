@@ -30,7 +30,7 @@ def require_neowiz_login():
         st.error("현재 Streamlit 버전에서 로그인 기능을 사용할 수 없습니다. requirements.txt 설치 상태를 확인해주세요.")
         st.stop()
 
-    if not st.user.is_logged_in:
+    if not bool(getattr(st.user, "is_logged_in", False)):
         st.markdown("## 플랫폼 정책 대응 현황")
         st.caption("NEOWIZ 계정으로 로그인하면 대시보드를 볼 수 있습니다.")
         if st.button("Google 계정으로 로그인", type="primary"):
