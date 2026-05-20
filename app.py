@@ -27,7 +27,7 @@ def get_logged_in_email():
 
 def require_neowiz_login():
     if not hasattr(st, "login") or not hasattr(st, "user"):
-        st.error("현재 Streamlit 버전에서 로그인 기능을 사용할 수 없습니다. requirements.txt 설치 상태를 확인해주세요.")
+        st.error("로그인 기능을 초기화하는 중입니다. 잠시 후 새로고침해주세요.")
         st.stop()
 
     if not bool(getattr(st.user, "is_logged_in", False)):
