@@ -358,6 +358,16 @@ def inject_style() -> None:
             justify-content: flex-end;
             padding-top: 2px;
         }
+        div[data-testid="stVerticalBlock"]:has(.quick-status-anchor) {
+            gap: 0.28rem;
+        }
+        div[data-testid="stVerticalBlock"]:has(.quick-status-anchor) div[data-testid="stButton"] > button {
+            min-height: 28px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+        }
         .policy-card-title {
             font-weight: 800;
             color: #1a202c;
@@ -1269,6 +1279,7 @@ def render_policy_expander(row: pd.Series) -> None:
         st.markdown(build_summary_card_html(row), unsafe_allow_html=True)
     with toggle_col:
         open_detail = st.toggle("상세/수정", key=toggle_key)
+        render_quick_status_controls(row)
     if open_detail:
         with st.container(border=True):
             st.markdown('<hr class="card-soft-divider">', unsafe_allow_html=True)
@@ -1341,6 +1352,50 @@ def render_policy_expander(row: pd.Series) -> None:
                         st.error("다른 곳에서 먼저 수정된 항목입니다. 새로고침 후 다시 확인해주세요.")
                     else:
                         st.error("저장에 실패했습니다.")
+
+
+def render_quick_status_controls(row: pd.Series) -> None:
+    current_status = str(row.get("status", ""))
+    quick_statuses = [
+        ("검토 전", "📋 검토 전"),
+        ("진행 중", "🔄 진행 중"),
+        ("완료", "✅ 완료"),
+        ("미대응", "❌ 미대응"),
+    ]
+
+    st.markdown('<span class="quick-status-anchor"></span>', unsafe_allow_html=True)
+    cols = st.columns(2, gap="small")
+    for idx, (label, status_value) in enumerate(quick_statuses):
+        is_active = status_value == current_status
+        button_label = status_value
+        with cols[idx % 2]:
+            clicked = st.button(
+                button_label,
+                key=f"quick-status-{row['row_number']}-{status_value}",
+                type="primary" if is_active else "secondary",
+                use_container_width=True,
+            )
+
+        if clicked and not is_active:
+            payload = {
+                "severity": str(row.get("severity") or "참고"),
+                "deadline": str(row.get("deadline") or "-"),
+                "status": status_value,
+                "assignee": str(row.get("assignee") or ""),
+                "memo": str(row.get("memo") or ""),
+            }
+            ok, result = update_row(
+                int(row["row_number"]),
+                payload,
+                str(row.get("lastModified", "") or ""),
+            )
+            if ok:
+                st.session_state["toast_message"] = "상태 변경 완료"
+                st.rerun()
+            elif result == "conflict":
+                st.error("다른 곳에서 먼저 수정된 항목입니다. 새로고침 후 다시 확인해주세요.")
+            else:
+                st.error("상태 변경에 실패했습니다.")
 
 
 def render_scroll_to_target() -> None:
